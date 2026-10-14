@@ -59,6 +59,16 @@ Known limits, honestly stated: no JS rendering (pure-SPA boards return shells un
 
 The scraper is the sensing layer; the dashboard is the decision layer: a ranked queue scored 0–100 on a fixed-budget rubric *you calibrate to your own priorities*, per-role dossiers with defended score breakdowns, a networking panel that makes outbound unavoidable, and a resume picker that tells you which version to send where. [`dashboard/RECREATE.md`](dashboard/RECREATE.md) is the full architecture and data model; [`dashboard/scoring.md`](dashboard/scoring.md) is the rubric framework — the calibration interview, the fixed-budget method, and the honesty mechanisms (evidence over adjectives, learned adjustments) that tune the model to your revealed preferences.
 
+## Screenshots
+
+The live system — a ranked decision queue fed by the scraper, and the per-role dossier with its defended score breakdown:
+
+![Decision queue](screenshots/01-decision-queue.png)
+*The decision queue: every role ranked 0–100 by the calibrated model. Work top-down.*
+
+![Role dossier](screenshots/02-role-dossier.png)
+*The role dossier: score anatomy with a one-line justification per dimension — if the points can't be defended in one line, they don't get awarded.*
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Fork it, tailor the rubric to your own hunt, snipe better jobs.
