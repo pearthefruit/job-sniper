@@ -1,58 +1,61 @@
 # Job Sniper 🎯
 
-An AI job-search command center: a keyless job-board scraper plus the complete spec for the ranked dashboard it feeds.
+Run a targeted job search directly in Muse.
 
-> *Target acquired.* Stop scrolling job boards like a meatbag. Point the scraper at the companies you want, score what comes back against a rubric that reflects your actual priorities, and work the ranked queue.
+> *Target acquired.* You pick the companies. The scraper pulls their boards every morning without burning a single LLM token. The dashboard ranks what comes back against a rubric that knows what you actually want. You work the queue top-down and spend your time on outreach, not scrolling.
 
-## What this is
+## Run it in Muse
 
-This repo is proof of work for building with AI. It has two parts:
+1. Clone this repo.
+2. Point Muse at it and paste:
 
-- **`/scraper`** — real, runnable code. A Python job scraper (httpx + BeautifulSoup, zero API keys, zero browser automation) that pulls postings from public ATS JSON APIs (Greenhouse, Lever, Ashby), Workday APIs, and generic career pages via a JSON-LD → CSS-selector → ATS-probe extraction cascade. Originally built for my private job-discovery project; cleaned up for public release.
-- **`/dashboard`** — a recreation guide, not a code dump. The ranked dashboard is a private hosted app and hosted apps can't be exported, so this folder documents the full architecture, data model, and scoring rubric — everything you need to rebuild it yourself (ideally by handing the spec to your own AI agent).
+```
+Recreate the Job Sniper system from this repo. Read README.md,
+dashboard/RECREATE.md and dashboard/scoring.md first, then:
 
-## Quickstart
+1. Build me the ranked-queue dashboard app described in RECREATE.md
+   (private, with its own database).
+2. Ask me for my target-company watchlist, then wire the scraper in
+   /scraper to a daily ingest over it.
+3. Score every new job with the rubric in scoring.md.
+
+Tell me when the queue is live.
+```
+
+3. Hand it your watchlist. That's the whole setup — what comes back is the system described in `/dashboard`.
+
+## Why this beats browser automation
+
+- **Zero tokens to pull jobs.** Browser automation feeds every page through the LLM — thousands of tokens per company, per day, forever. Job Sniper hits public JSON APIs (Greenhouse, Lever, Ashby, Workday) with deterministic Python: structured data, no rendering, no tokens. The AI only touches the shortlist, at scoring time. The expensive, repetitive part of the search becomes free.
+- **Deterministic beats flaky.** A browser session breaks when a site redesigns a button. A JSON API returns the same schema for years. When a page does change, the extraction cascade (JSON-LD → CSS selectors → ATS probe) degrades gracefully instead of dying mid-run.
+- **Verification without judgment calls.** `--check-url` separates *removed* (404) from *bot-blocked* (403/406/429) from *page changed* (200, nothing extracted). No LLM in the loop, no guessing whether a posting is really gone.
+- **Compounding, not repeating.** Seen-file dedup means repeat runs surface only what's new. Your watchlist is code — it version-controls, diffs, and never forgets a company.
+
+## The scraper
+
+httpx + BeautifulSoup. No API keys, no browser, no logins.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
-# Discovery: scan boards for keyword matches
+# Scan your watchlist for keyword matches
 .venv/bin/python run.py --sources sources.json --keywords "AI Product,Product Manager" --out out.json
 
-# Verify a single posting: live, removed, or bot-blocked?
+# Is this exact posting still live?
 .venv/bin/python run.py --check-url "https://boards.greenhouse.io/acme/jobs/123" --company "Acme"
 
-# Repeat runs only report new jobs
+# Repeat runs report only new jobs
 .venv/bin/python run.py --sources sources.json --keywords "AI Product" --seen seen.json --out out.json
 ```
 
-`sources.json` is a list of `{"company_name": "...", "url": "..."}` — see `sources.example.json`. Point it at the career pages and ATS boards of companies you actually want to work for.
+`sources.json` is a list of `{"company_name": "...", "url": "..."}` — see `sources.example.json`. Every job carries an `_extraction_method` tag (greenhouse / lever / ashby / workday-api / json-ld / css / phenom …) so you can see which tier produced it. An LLM extraction fallback exists but is auto-disabled without API keys — the keyless path is the point.
 
-## How the scraper works
+Known limits, honestly stated: no JS rendering (pure-SPA boards return shells unless an ATS/JSON-LD fallback saves them), blocked pages return empty without retrying, selectors drift as sites redesign.
 
-Each source is routed by URL to the right extractor, and every job carries an `_extraction_method` tag so you can see which tier produced it:
+## The dashboard
 
-| Tier | What it does |
-|---|---|
-| ATS APIs | Greenhouse / Lever / Ashby public JSON endpoints — the highest-signal source |
-| Workday API | Direct Workday job-search API probing (with locale-segment handling) |
-| JSON-LD | Schema.org `JobPosting` structured data, when the page embeds it |
-| CSS selectors | Snapshot-based selectors for common career-page layouts |
-| Phenom | Embedded-JSON extraction for Phenom-powered boards |
-| LLM fallback | Optional; auto-disabled when no API keys are set |
-
-`--check-url` verification mode distinguishes what scrapers usually lump together: `live` (200 + job extracted), `gone_404`, `blocked` (403/406/429 — bot-blocked, *not* proof of removal), `unconfirmed` (200 but no job extracted — SPA shell or changed layout), and `error`.
-
-Known limits: no JS rendering (pure-SPA boards return shells unless an ATS/JSON-LD fallback saves them), blocked pages return empty without retrying, and selectors drift as sites redesign.
-
-## What's deliberately not here
-
-**No LinkedIn module.** The original project had a LinkedIn guest-API scraper. It was removed for this release: scraping LinkedIn violates their Terms of Service and risks takedowns. LinkedIn source URLs are rejected with a clear error instead of silently misbehaving. The ATS + career-page scrapers are the defensible core.
-
-## The dashboard (`/dashboard`)
-
-The scraper is the sensing layer. The dashboard is the decision layer: a ranked queue of roles scored 0–100 against a fixed-budget rubric (AI substance is the defining dimension), per-role dossiers, a networking panel with outreach targets, and a daily ingest that keeps it fresh. Read [`/dashboard/RECREATE.md`](dashboard/RECREATE.md) for the architecture and [`/dashboard/scoring.md`](dashboard/scoring.md) for the rubric.
+The scraper is the sensing layer; the dashboard is the decision layer: a ranked queue scored 0–100 on a fixed-budget rubric where **AI substance is the defining dimension** (25 pts), per-role dossiers with defended score breakdowns, a networking panel that makes outbound unavoidable, and a two-resume picker that tells you which resume to send where. [`dashboard/RECREATE.md`](dashboard/RECREATE.md) is the full architecture and data model; [`dashboard/scoring.md`](dashboard/scoring.md) is the rubric, including the anti-AI-washing anchors and the learned adjustments that tune the model to your revealed preferences.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Use it, tailor it, snipe better jobs.
+MIT — see [LICENSE](LICENSE). Fork it, tailor the rubric to your own hunt, snipe better jobs.
