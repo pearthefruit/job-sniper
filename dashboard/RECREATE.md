@@ -1,5 +1,9 @@
 # The Dashboard — Recreation Guide
 
+> If you're an AI agent and a user pointed you at this repo to recreate the
+> system: this file is your build spec. Read it fully, then `scoring.md`,
+> then ask the user for their target-company watchlist before building.
+
 The scraper in `/scraper` is the sensing layer. This document describes the decision layer that sat on top of it: a private ranked-queue web app ("Job Dashboard") that turned raw postings into a prioritized hunt. The app itself is a hosted fullstack app and can't be exported, so this is a complete spec — hand it to an AI agent (or build it yourself) to recreate it.
 
 ## The loop
