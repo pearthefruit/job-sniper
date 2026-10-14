@@ -15,9 +15,12 @@ dashboard/RECREATE.md and dashboard/scoring.md first, then:
 
 1. Build me the ranked-queue dashboard app described in RECREATE.md
    (private, with its own database).
-2. Ask me for my target-company watchlist, then wire the scraper in
+2. Interview me about my job-search priorities — comp targets, geography,
+   the work that energizes me, dealbreakers — and propose a scoring rubric
+   for my approval (see dashboard/scoring.md). Don't score anything until
+   I approve it.
+3. Ask me for my target-company watchlist, then wire the scraper in
    /scraper to a daily ingest over it.
-3. Score every new job with the rubric in scoring.md.
 
 Tell me when the queue is live.
 ```
@@ -54,7 +57,7 @@ Known limits, honestly stated: no JS rendering (pure-SPA boards return shells un
 
 ## The dashboard
 
-The scraper is the sensing layer; the dashboard is the decision layer: a ranked queue scored 0–100 on a fixed-budget rubric where **AI substance is the defining dimension** (25 pts), per-role dossiers with defended score breakdowns, a networking panel that makes outbound unavoidable, and a two-resume picker that tells you which resume to send where. [`dashboard/RECREATE.md`](dashboard/RECREATE.md) is the full architecture and data model; [`dashboard/scoring.md`](dashboard/scoring.md) is the rubric, including the anti-AI-washing anchors and the learned adjustments that tune the model to your revealed preferences.
+The scraper is the sensing layer; the dashboard is the decision layer: a ranked queue scored 0–100 on a fixed-budget rubric *you calibrate to your own priorities*, per-role dossiers with defended score breakdowns, a networking panel that makes outbound unavoidable, and a resume picker that tells you which version to send where. [`dashboard/RECREATE.md`](dashboard/RECREATE.md) is the full architecture and data model; [`dashboard/scoring.md`](dashboard/scoring.md) is the rubric framework — the calibration interview, the fixed-budget method, and the honesty mechanisms (evidence over adjectives, learned adjustments) that tune the model to your revealed preferences.
 
 ## License
 
