@@ -34,30 +34,26 @@ One record per role. Fields that mattered:
 | `salaryText`, `rankingSalary` | Parsed range; the ranking number is what the scorer uses |
 | `score`, `scoreParts[]` | 0–100 total; each part carries `{key, label, maximum, points, note}` — the note is a human-readable justification, and it's what makes the score trustworthy |
 | `status` | `new` → `applied` / `dismissed`; `excluded` with reason for hard no's |
-| `resume` | Which of your resumes fits this role + why (see below) |
+| `resume` | Which resume version to send + why (see below) |
 | `outreachTargets[]` | Networking targets per role (see below) |
 | `learnedAdjustment` | Score nudge from your past verdicts (see below) |
 
 ## Scoring
 
-Fixed 100-point budget — see [`scoring.md`](scoring.md) for the full rubric:
-
-| Dimension | Weight |
-|---|---|
-| AI substance | 25 (the defining dimension) |
-| Salary | 20 |
-| Employer tier | 20 |
-| Work tilt | 15 |
-| Location | 10 |
-| Recency | 5 |
-| Urgency (deadline) | 5 |
+Fixed 100-point budget, calibrated to the user's own priorities — see
+[`scoring.md`](scoring.md) for the framework. The key design choice: the
+agent *interviews* the user about comp targets, geography, energizing vs.
+draining work, and dealbreakers, then proposes dimensions, weights, and
+tier definitions for approval. Nothing scores until the user signs off.
+One dimension may be designated the defining dimension when a single
+factor dominates the decision.
 
 Two mechanisms kept it honest:
 
-1. **Per-part notes.** Every score part carries a one-line justification ("single mention appears only in introductory team copy" → 0 AI points). If you can't defend the points in one line, you don't award them. This is also what defeats AI-washing in JDs.
-2. **Learning from verdicts.** Every applied/dismissed verdict feeds back as a small learned adjustment per dimension (e.g. "roles without substantive AI work" → −1.5 on AI). The model tunes itself to your revealed preferences instead of your stated ones.
+1. **Per-part notes.** Every score part carries a one-line justification — if you can't defend the points in one line, you don't award them.
+2. **Learning from verdicts.** Every applied/dismissed verdict feeds back as a small learned adjustment per dimension. The model tunes itself to revealed preferences instead of stated ones.
 
-Salary acts as a tiebreak within ~2 points — when scores are close, money talks.
+A pre-agreed tiebreak dimension (usually compensation) decides near-ties.
 
 ## Per-role dossier
 
@@ -75,18 +71,19 @@ Plus a one-tap LinkedIn search button (`{Company} {role family} #hiring`) and qu
 
 ## Resume picker
 
-Two resumes, and the app tells you which one to send per role with a reason:
-
-- **6-YOE, 1 page** — tight recent story (last ~5 years), GTM/launch framing. For product roles where recency beats breadth.
-- **Full, 2 pages** — adds early career, advisory work, service-delivery/ops framing. For consulting, partner-track, and senior/breadth roles.
-
-Rule of thumb encoded: ~5 YOE roles get the 1-pager (a 2-pager looks off); 8+ YOE / consulting-breadth roles get the full.
+If you keep multiple resume versions, the app recommends one per role with
+a reason — e.g. a tight 1-pager where recency beats breadth, a full 2-pager
+for senior or breadth roles. Encode your own rule of thumb; the point is
+that the recommendation is explicit and reviewable, not a coin flip.
 
 ## Rebuild steps
 
 1. Take `/scraper` and build a `sources.json` watchlist of your target companies' career pages and ATS boards.
 2. Store results in any database (SQLite is plenty) using the data model above; fetch full descriptions at ingest.
-3. Implement the rubric in `scoring.md` — fixed weights, per-part justification notes, learned adjustments from your verdicts.
+3. Run the calibration interview from `scoring.md`: elicit the user's
+   priorities, propose the rubric for their approval, and only then
+   implement it — fixed weights, per-part justification notes, learned
+   adjustments from their verdicts.
 4. Build the queue UI: ranked list → dossier view → status controls. Add the networking panel and resume picker.
 5. Schedule the daily ingest. Silent on success; loud only when something is new, closing, or urgent.
 
